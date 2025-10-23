@@ -1,0 +1,9 @@
+@echo off
+echo Starting RPCfi Flow Simulator...
+echo.
+echo Activating virtual environment...
+call rpcfi_env\Scripts\activate.bat
+echo.
+echo Starting Streamlit application...
+streamlit run app.py
+pause
