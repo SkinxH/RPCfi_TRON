@@ -611,7 +611,7 @@ def show_buyback_page(simulator: RPCfiSimulator):
     # Weekly LP minted table
     st.subheader("Weekly LP Details")
     
-        display_data = simulator.simulation_data[['Date', 'Weekly_LP_Value_USD', 'Cumulative_RPCfi_LP_USD', 'Total_LP_TVL_USD']].copy()
+    display_data = simulator.simulation_data[['Date', 'Weekly_LP_Value_USD', 'Cumulative_RPCfi_LP_USD', 'Total_LP_TVL_USD']].copy()
     display_data['Date'] = display_data['Date'].dt.strftime('%Y-%m-%d')
     display_data = display_data.round(2)
     
