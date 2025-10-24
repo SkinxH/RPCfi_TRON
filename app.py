@@ -386,7 +386,7 @@ def show_about_page(simulator: RPCfiSimulator):
     1. **A decentralized application (DApp) spends $10,000 per month** on Ankr's Premium RPC services on Avalanche
     2. **Under the new RPCfi model, 50% of that spend ($5,000)** is automatically captured and redirected onchain
     3. **The first step** is bridging the USD value to the Neura blockchain
-    4. **That $5,000 is then used to buy equal portions** of AVAX and NEURA ($2,500 each)
+    4. **That $5,000** is then used to buy equal portions of AVAX and NEURA ($2,500 each)
     5. **The resulting assets are then deposited** into a liquidity pool via Zotto, Neura's flagship veDEX/AMM
     6. **The rewards generated** by that liquidity position, including emissions and RPCfi points, go directly back to the originating DApp
     7. **The DApp can then choose** how to use those rewards: distribute them to holders, reward stakers, or reinvest them
@@ -575,9 +575,9 @@ def show_buyback_page(simulator: RPCfiSimulator):
     
     fig2.add_trace(go.Scatter(
         x=simulator.simulation_data['Date'],
-        y=simulator.simulation_data['Cumulative_Dev_LP_USD'],
+        y=simulator.simulation_data['Cumulative_RPCfi_LP_USD'],
         mode='lines+markers',
-        name='Developer LP',
+        name='RPCfi LP',
         line=dict(color='#3498db', width=3)
     ))
     
