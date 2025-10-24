@@ -245,7 +245,7 @@ class RPCfiSimulator:
                 'AVAX_Units': avax_units,
                 'NEURA_Units': neura_units,
                 'Weekly_LP_Value_USD': weekly_lp_value,
-                'Cumulative_Dev_LP_USD': cumulative_dev_lp,
+                'Cumulative_RPCfi_LP_USD': cumulative_dev_lp,
                 'Total_LP_TVL_USD': cumulative_dev_lp + foundation_lp_value,
                 'Dev_Weekly_Yield_USD': dev_yield,
                 'Foundation_Weekly_Yield_USD': foundation_yield,
