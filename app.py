@@ -13,7 +13,7 @@ from typing import Dict, List, Tuple
 # Page configuration
 st.set_page_config(
     page_title="RPCfi Flow Simulator",
-    page_icon="avax.png",
+    page_icon="trx.png",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -96,31 +96,31 @@ class RPCfiSimulator:
     
     
     def calculate_buybacks(self, weekly_revenue: float) -> Tuple[float, float]:
-        """Calculate AVAX and NEURA buybacks from weekly revenue (50% of revenue used)"""
+        """Calculate TRX and ANKR buybacks from weekly revenue (50% of revenue used)"""
         # Only 50% of revenue is used for buybacks
         buyback_pool = 0.50 * weekly_revenue
-        # Split the 50% equally between AVAX and NEURA
-        avax_buyback = 0.25 * weekly_revenue  # 25% of total revenue
-        neura_buyback = 0.25 * weekly_revenue  # 25% of total revenue
-        return avax_buyback, neura_buyback
+        # Split the 50% equally between TRX and ANKR
+        trx_buyback = 0.25 * weekly_revenue  # 25% of total revenue
+        ankr_buyback = 0.25 * weekly_revenue  # 25% of total revenue
+        return trx_buyback, ankr_buyback
     
-    def calculate_lp_units(self, avax_buyback: float, neura_buyback: float) -> Tuple[float, float]:
+    def calculate_lp_units(self, trx_buyback: float, ankr_buyback: float) -> Tuple[float, float]:
         """Calculate LP units from buyback amounts"""
-        avax_price = self.token_prices[self.native_token]
-        neura_price = self.token_prices[self.governance_token]
+        trx_price = self.token_prices[self.native_token]
+        ankr_price = self.token_prices[self.governance_token]
         
-        avax_units = avax_buyback / avax_price
-        neura_units = neura_buyback / neura_price
+        trx_units = trx_buyback / trx_price
+        ankr_units = ankr_buyback / ankr_price
         
-        return avax_units, neura_units
+        return trx_units, ankr_units
     
-    def calculate_lp_value(self, avax_units: float, neura_units: float) -> float:
+    def calculate_lp_value(self, trx_units: float, ankr_units: float) -> float:
         """Calculate LP value in USD"""
-        avax_price = self.token_prices[self.native_token]
-        neura_price = self.token_prices[self.governance_token]
+        trx_price = self.token_prices[self.native_token]
+        ankr_price = self.token_prices[self.governance_token]
         
         # LP value is the total value of both tokens in the pair
-        return avax_units * avax_price + neura_units * neura_price
+        return trx_units * trx_price + ankr_units * ankr_price
     
     def calculate_yield(self, lp_value: float, apy: float) -> float:
         """Calculate weekly yield from LP value"""
@@ -128,69 +128,45 @@ class RPCfiSimulator:
         return weekly_yield
     
     def generate_future_revenue_data(self) -> Dict[str, float]:
-        """Generate 2-year revenue data based on historical data and growth assumptions"""
-        # Start from January 2026
-        start_date = datetime(2026, 1, 1)
-        end_date = datetime(2027, 12, 31)  # Exactly 2 years from start
-        
-        # Get the last historical month's revenue as base
+        """Generate future monthly revenue data using modular growth assumptions."""
+        # Read simulation period from config (fallback to 2026-2027)
+        sim_period = self.config.get('simulation_period', {})
+        start_str = sim_period.get('start', '2026-01-01')
+        end_str = sim_period.get('end', '2027-12-31')
+        start_date = datetime.strptime(start_str, '%Y-%m-%d')
+        end_date = datetime.strptime(end_str, '%Y-%m-%d')
+
+        # Base revenue: last historical month, scaled by initial growth multiplier
         if self.historical_data:
             last_month_revenue = list(self.historical_data.values())[-1]
         else:
-            last_month_revenue = 35000.0  # Default fallback
-        
+            last_month_revenue = 35000.0
+        base_revenue = last_month_revenue * self.growth_multiplier
+
         revenue_data = {}
         current_date = start_date
-        month_count = 0
-        
+
+        # Linear ramp from 1.0 to expected_future_growth_multiplier over the period
         while current_date <= end_date:
-            # Apply growth curve to monthly revenue
-            # Month 0 = January 2026, Month 3 = April 2026, etc.
-            growth_factor = self.get_monthly_growth_factor(month_count)
-            monthly_revenue = last_month_revenue * growth_factor
-            
-            month_key = current_date.strftime("%Y-%m")
+            months_elapsed = (current_date.year - start_date.year) * 12 + (current_date.month - start_date.month)
+            total_months = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month)
+            if total_months > 0:
+                growth_factor = 1.0 + (self.expected_future_growth_multiplier - 1.0) * (months_elapsed / total_months)
+            else:
+                growth_factor = 1.0
+
+            monthly_revenue = base_revenue * growth_factor
+            month_key = current_date.strftime('%Y-%m')
             revenue_data[month_key] = monthly_revenue
-            
-            # DEBUG: Print growth factors for verification
-            print(f"{month_key}: Base ${last_month_revenue:,.0f} × {growth_factor:.2f} = ${monthly_revenue:,.0f}")
-            
-            # Move to next month
+
+            # Next month
             if current_date.month == 12:
                 current_date = current_date.replace(year=current_date.year + 1, month=1)
             else:
                 current_date = current_date.replace(month=current_date.month + 1)
-            
-            month_count += 1
-        
+
         return revenue_data
     
-    def get_monthly_growth_factor(self, month_num: int) -> float:
-        """Get growth factor for a specific month (0-based)"""
-        # HARD-CODED GROWTH FACTORS:
-        # Month 0: 1.0x (base)
-        # Month 3: 1.5x (50% increase)
-        # Month 6: 1.75x
-        # Month 9: 1.875x
-        # Month 12: 2.0x (2x increase)
-        # Month 15: 2.5x
-        # Month 18: 3.0x (3x increase)
-        # Month 24: 3.0x (capped)
-        
-        if month_num <= 3:
-            # Linear growth to 50% increase over 3 months
-            growth_factor = 1 + (0.5 * month_num / 3)
-        elif month_num <= 12:
-            # Linear growth from 1.5x to 2x over 9 months (months 3-12)
-            growth_factor = 1.5 + (0.5 * (month_num - 3) / 9)
-        elif month_num <= 18:
-            # Linear growth from 2x to 3x over 6 months (months 12-18)
-            growth_factor = 2.0 + (1.0 * (month_num - 12) / 6)
-        else:
-            # Cap at 3x after 18 months
-            growth_factor = 3.0
-        
-        return growth_factor
     
     def run_simulation(self, apy_scenario: str = 'base') -> pd.DataFrame:
         """Run the complete simulation"""
@@ -218,11 +194,11 @@ class RPCfiSimulator:
             weekly_revenue = row['RPC_Revenue_USD']
             
             # Calculate buybacks from current week's revenue
-            avax_buyback, neura_buyback = self.calculate_buybacks(weekly_revenue)
+            trx_buyback, ankr_buyback = self.calculate_buybacks(weekly_revenue)
             
             # Calculate LP units and value from this week's buybacks
-            avax_units, neura_units = self.calculate_lp_units(avax_buyback, neura_buyback)
-            weekly_lp_value = self.calculate_lp_value(avax_units, neura_units)
+            trx_units, ankr_units = self.calculate_lp_units(trx_buyback, ankr_buyback)
+            weekly_lp_value = self.calculate_lp_value(trx_units, ankr_units)
             
             # Update cumulative developer LP (only grows from new deposits, no compounding)
             cumulative_dev_lp += weekly_lp_value
@@ -240,10 +216,10 @@ class RPCfiSimulator:
                 'Date': row['Date'],
                 'Week': week_num + 1,
                 'RPC_Revenue_USD': weekly_revenue,
-                'AVAX_Buyback_USD': avax_buyback,
-                'NEURA_Buyback_USD': neura_buyback,
-                'AVAX_Units': avax_units,
-                'NEURA_Units': neura_units,
+                'TRX_Buyback_USD': trx_buyback,
+                'ANKR_Buyback_USD': ankr_buyback,
+                'TRX_Units': trx_units,
+                'ANKR_Units': ankr_units,
                 'Weekly_LP_Value_USD': weekly_lp_value,
                 'Cumulative_RPCfi_LP_USD': cumulative_dev_lp,
                 'Total_LP_TVL_USD': cumulative_dev_lp + foundation_lp_value,
@@ -283,8 +259,8 @@ def get_default_revenue_data() -> Dict[str, float]:
     }
 
 def main():
-    # Load AVAX configuration
-    config = load_config('config_avax.json')
+    # Load Tron configuration
+    config = load_config('config_tron.json')
     if config is None:
         st.error("Configuration file not found!")
         return
@@ -293,15 +269,15 @@ def main():
     col1, col2, col3 = st.columns([0.8, 2.4, 0.8])
     
     with col1:
-        if os.path.exists('avax.png'):
-            st.image('avax.png', width=50)
+        if os.path.exists('trx.png'):
+            st.image('trx.png', width=50)
     
     with col2:
         st.markdown('<div class="main-header">RPCfi Flow Simulator</div>', unsafe_allow_html=True)
     
     with col3:
-        if os.path.exists('neura.png'):
-            st.image('neura.png', width=50)
+        if os.path.exists('ankr.png'):
+            st.image('ankr.png', width=50)
     
     # Initialize simulator
     simulator = RPCfiSimulator(config)
@@ -383,13 +359,13 @@ def show_about_page(simulator: RPCfiSimulator):
     
     Here's how RPCfi works in practice:
     
-    1. **A decentralized application (DApp) spends $10,000 per month** on Ankr's Premium RPC services on Avalanche
-    2. **Under the new RPCfi model, 50% of that spend ($5,000)** is automatically captured and redirected onchain
-    3. **The first step** is bridging the USD value to the Neura blockchain
-    4. **That $5,000** is then used to buy equal portions of AVAX and NEURA ($2,500 each)
-    5. **The resulting assets are then deposited** into a liquidity pool via Zotto, Neura's flagship veDEX/AMM
-    6. **The rewards generated** by that liquidity position, including emissions and RPCfi points, go directly back to the originating DApp
-    7. **The DApp can then choose** how to use those rewards: distribute them to holders, reward stakers, or reinvest them
+    1. **A decentralized application (DApp) spends $10,000 per month** on Ankr's Premium RPC services on Tron.
+    2. **Under the new RPCfi model, 50% of that spend ($5,000)** is automatically captured and redirected onchain.
+    3. **The first step** is bridging the USD value to the Neura blockchain.
+    4. **Then $5,000 is used to purchase equal portions of TRX and ANKR** — $2,500 allocated to each side of the pair.
+    5. **The resulting assets are deposited** into a liquidity pool via Zotto, Neura's flagship veDEX/AMM.
+    6. **Rewards generated** by that liquidity position (emissions and RPCfi points) flow directly back to the originating DApp.
+    7. **The DApp can then choose** how to use those rewards: distribute to holders, reward stakers, or reinvest.
     
     This model goes live at the mainnet launch, integrated natively with Ankr's existing infrastructure business.
     
@@ -421,38 +397,67 @@ def show_about_page(simulator: RPCfiSimulator):
     and durable network effects. It turns a hidden cost center into the backbone of a healthier DeFi economy.
     """)
     
-    # Growth Assumptions Section
+    # Growth Assumptions Section (modular, selectable)
     st.markdown("---")
     st.subheader("Growth Assumptions in This Simulation")
-    
-    st.markdown("""
-    This simulation models the RPCfi revenue flows for Avalanche over a 2-year period (January 2026 - December 2027) based on 
-    the following growth assumptions:
-    
-    **Revenue Growth Curve:**
-    - **Month 0 (Jan 2026)**: 1.0x base revenue ($23,877/month)
-    - **Month 3 (Apr 2026)**: 1.5x revenue ($35,815/month) - 50% increase
-    - **Month 6 (Jul 2026)**: 1.75x revenue ($41,785/month)
-    - **Month 9 (Oct 2026)**: 1.875x revenue ($44,769/month)
-    - **Month 12 (Jan 2027)**: 2.0x revenue ($47,753/month) - 2x increase
-    - **Month 15 (Apr 2027)**: 2.5x revenue ($59,691/month)
-    - **Month 18 (Jul 2027)**: 3.0x revenue ($71,630/month) - 3x increase
-    - **Month 24 (Dec 2027)**: 3.0x revenue ($71,630/month) - capped at 3x
-    
+
+    growth_scenarios = {
+        "Conservative": {
+            "description": "Flat-to-low growth with conservative projections",
+            "initial": 1.0,
+            "future": 1.8,
+            "approach": "Focus on current revenue with limited future growth"
+        },
+        "Moderate": {
+            "description": "Moderate growth with steady expansion",
+            "initial": 1.5,
+            "future": 2.0,
+            "approach": "Steady growth based on historical trends and adoption"
+        },
+        "Optimistic": {
+            "description": "Aggressive growth with high adoption",
+            "initial": 2.0,
+            "future": 3.5,
+            "approach": "High growth scenario with strong market adoption"
+        }
+    }
+
+    selected_scenario = st.selectbox(
+        "Select Growth Scenario:",
+        options=list(growth_scenarios.keys()),
+        index=1
+    )
+
+    scenario = growth_scenarios[selected_scenario]
+    st.session_state["rpcfi_growth_initial_multiplier"] = scenario["initial"]
+    st.session_state["rpcfi_growth_future_multiplier"] = scenario["future"]
+    st.session_state["rpcfi_selected_growth_scenario"] = selected_scenario
+
+    st.markdown(f"""
+    **Selected Scenario: {selected_scenario}**
+
+    {scenario['description']}
+
+    **Revenue Model:**
+    - **Base Revenue**: Uses last historical month as baseline, scaled by initial multiplier
+    - **Initial Growth**: {scenario['initial']}x immediately applied
+    - **Future Growth**: Linear ramp to {scenario['future']}x over simulation period
+    - **Growth Approach**: {scenario['approach']}
+
     **Revenue Split:**
-    - **50%** goes to Ankr protocol (infrastructure costs)
-    - **25%** used for AVAX buybacks
-    - **25%** used for NEURA buybacks
-    
+    - **50%** goes to infrastructure costs
+    - **25%** used for TRX buybacks
+    - **25%** used for ANKR buybacks
+
     **APY Scenarios:**
     - **Worst Case**: 20% APY
     - **Base Case**: 30% APY  
     - **Best Case**: 40% APY
-    
+
     **Key Mechanics:**
-    - All buybacks are converted to LP tokens (AVAX/NEURA pairs)
-    - LP growth comes only from new buyback deposits (no compounding)
-    - Yields are paid out to developers, not reinvested
+    - All buybacks are converted to LP tokens (TRX/ANKR pairs)
+    - LP grows from new buyback deposits (no auto-compounding)
+    - Yields are paid out (not reinvested)
     - Foundation LP remains constant at $100,000
     """)
 
@@ -460,6 +465,12 @@ def show_overview_page(simulator: RPCfiSimulator):
     """Display the overview page"""
     st.header("Simulation Overview")
     
+    # Apply selected growth settings from About tab
+    if "rpcfi_growth_initial_multiplier" in st.session_state:
+        simulator.growth_multiplier = st.session_state["rpcfi_growth_initial_multiplier"]
+    if "rpcfi_growth_future_multiplier" in st.session_state:
+        simulator.expected_future_growth_multiplier = st.session_state["rpcfi_growth_future_multiplier"]
+
     # APY Scenario Selection
     st.subheader("APY Scenario")
     apy_scenario = st.selectbox(
@@ -487,7 +498,7 @@ def show_overview_page(simulator: RPCfiSimulator):
             st.metric("Total RPC Revenue", f"${total_revenue:,.0f}")
         
         with col2:
-            total_buybacks = (simulation_results['AVAX_Buyback_USD'] + simulation_results['NEURA_Buyback_USD']).sum()
+            total_buybacks = (simulation_results['TRX_Buyback_USD'] + simulation_results['ANKR_Buyback_USD']).sum()
             st.metric("Total Buybacks", f"${total_buybacks:,.0f}")
         
         with col3:
@@ -541,7 +552,7 @@ def show_buyback_page(simulator: RPCfiSimulator):
     fig.add_trace(
         go.Scatter(
             x=simulator.simulation_data['Date'],
-            y=simulator.simulation_data['AVAX_Buyback_USD'],
+            y=simulator.simulation_data['TRX_Buyback_USD'],
             mode='lines+markers',
             name=f'{simulator.native_token} Buybacks',
             line=dict(color='#e74c3c')
@@ -552,7 +563,7 @@ def show_buyback_page(simulator: RPCfiSimulator):
     fig.add_trace(
         go.Scatter(
             x=simulator.simulation_data['Date'],
-            y=simulator.simulation_data['NEURA_Buyback_USD'],
+            y=simulator.simulation_data['ANKR_Buyback_USD'],
             mode='lines+markers',
             name=f'{simulator.governance_token} Buybacks',
             line=dict(color='#3498db')

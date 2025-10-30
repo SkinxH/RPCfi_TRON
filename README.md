@@ -1,11 +1,11 @@
-# RPCfi Flow Simulator - Avalanche
+# RPCfi Flow Simulator - Tron
 
-A professional Streamlit application that simulates RPCfi revenue flows, buybacks, LP growth, and developer yield for the Avalanche blockchain with NEURA token integration.
+A professional Streamlit application that simulates RPCfi revenue flows, buybacks, LP growth, and developer yield for the Tron blockchain with ANKR token integration.
 
 ## Features
 
 - **About RPCfi Page**: Comprehensive explanation of RPCfi concept and mechanics
-- **Avalanche Focused**: Dedicated simulation for AVAX/NEURA token pair
+- **Tron Focused**: Dedicated simulation for TRX/ANKR token pair
 - **APY Scenarios**: Three distinct scenarios (20%, 30%, 40% APY)
 - **2-Year Projection**: Extended simulation from Jan 2026 to Dec 2027
 - **Professional Design**: Clean, sober interface with pastel colors
@@ -16,9 +16,9 @@ A professional Streamlit application that simulates RPCfi revenue flows, buyback
 
 The RPCfi Flow Simulator models how RPC revenue is distributed through the ecosystem:
 
-1. **RPC Revenue** → 50% used for buybacks (25% AVAX, 25% NEURA), 50% to Ankr protocol
+1. **RPC Revenue** → 50% used for buybacks (25% TRX, 25% ANKR), 50% to Ankr protocol
 2. **Buybacks** → Create LP tokens on Neura blockchain
-3. **LP Tokens** → Generate yield through NEURA emissions
+3. **LP Tokens** → Generate yield through ANKR emissions
 4. **Yield Distribution** → Rewards developers and foundations
 
 ## Installation
@@ -66,24 +66,24 @@ The RPCfi Flow Simulator models how RPC revenue is distributed through the ecosy
 ### Logo Setup
 
 Replace the placeholder logo files with actual images:
-- `avax.png` - Avalanche logo
-- `neura.png` - NEURA token logo
+- `trx.png` - Tron logo
+- `ankr.png` - ANKR token logo
 
 ### Configuration
 
-The simulator uses a single configuration file (`config_avax.json`) with the following structure:
+The simulator uses a single configuration file (`config_tron.json`) with the following structure:
 
 ```json
 {
-  "chain_name": "Avalanche",
-  "native_token": "AVAX",
-  "governance_token": "NEURA",
+  "chain_name": "Tron",
+  "native_token": "TRX",
+  "governance_token": "ANKR",
   "token_prices": {
-    "AVAX": 25.0,
-    "NEURA": 0.80
+    "TRX": 0.12,
+    "ANKR": 0.025
   },
   "initial_lp": {
-    "Avalanche Foundation": 50000,
+    "Tron Foundation": 50000,
     "Neura Foundation": 50000
   },
   "growth_multiplier": 1.4,
@@ -122,14 +122,14 @@ python simulate_rpcfi.py --create-configs
 ## 📊 Simulation Logic
 
 ### Revenue Split
-- **25%** → Native token buybacks (e.g., TRX)
+- **25%** → Native token buybacks (TRX)
 - **25%** → ANKR buybacks
 - **50%** → Ankr protocol (not simulated)
 
 ### LP Creation
 - Buyback funds purchase tokens at configured prices
 - Tokens paired 1:1 value-wise to create LP tokens
-- LP tokens earn NEURA emissions
+- LP tokens earn ANKR emissions
 
 ### Yield Calculation
 - **Foundation LPs**: Static $50k per foundation
@@ -182,7 +182,7 @@ The simulator provides comprehensive analytics including:
 - **Final LP TVL**: Total liquidity pool value
 - **Developer Yield**: Cumulative yield distributed to developers
 - **Foundation Yield**: Yield earned by foundations
-- **Growth Metrics**: Revenue growth over time
+- **Flat Revenue Model**: Conservative approach without growth assumptions
 
 ## 🤝 Contributing
 

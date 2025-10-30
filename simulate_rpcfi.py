@@ -14,18 +14,18 @@ def generate_synthetic_revenue_data(
     start_month: str = "2025-04",
     end_month: str = "2025-09",
     base_revenue: float = 15000,
-    growth_rate: float = 0.15,
-    volatility: float = 0.1
+    growth_rate: float = 0.0,
+    volatility: float = 0.05
 ) -> dict:
     """
-    Generate synthetic RPC revenue data with realistic growth patterns
+    Generate synthetic RPC revenue data with flat revenue (no growth assumptions)
     
     Args:
         start_month: Start month in YYYY-MM format
         end_month: End month in YYYY-MM format
         base_revenue: Base monthly revenue in USD
-        growth_rate: Monthly growth rate (0.15 = 15% monthly growth)
-        volatility: Random volatility factor (0.1 = 10% random variation)
+        growth_rate: Monthly growth rate (0.0 = no growth)
+        volatility: Random volatility factor (0.05 = 5% random variation)
     
     Returns:
         Dictionary with month-revenue pairs
@@ -72,23 +72,23 @@ def generate_multiple_scenarios() -> dict:
     scenarios = {
         "conservative": generate_synthetic_revenue_data(
             base_revenue=12000,
-            growth_rate=0.10,
-            volatility=0.05
+            growth_rate=0.0,
+            volatility=0.02
         ),
         "moderate": generate_synthetic_revenue_data(
             base_revenue=15000,
-            growth_rate=0.15,
-            volatility=0.10
+            growth_rate=0.0,
+            volatility=0.05
         ),
         "aggressive": generate_synthetic_revenue_data(
             base_revenue=20000,
-            growth_rate=0.20,
-            volatility=0.15
+            growth_rate=0.0,
+            volatility=0.08
         ),
         "volatile": generate_synthetic_revenue_data(
             base_revenue=15000,
-            growth_rate=0.12,
-            volatility=0.25
+            growth_rate=0.0,
+            volatility=0.15
         )
     }
     return scenarios
@@ -112,12 +112,12 @@ def create_sample_configs():
             "chain_name": "Tron",
             "native_token": "TRX",
             "rpcfi_partner": "Ankr",
-            "governance_token": "NEURA",
+            "governance_token": "ANKR",
             "base_currency": "USD",
             "token_prices": {
                 "TRX": 0.12,
                 "ANKR": 0.025,
-                "NEURA": 0.80
+                "ANKR": 0.025
             },
             "initial_lp": {
                 "Tron Foundation": 50000,
@@ -140,12 +140,12 @@ def create_sample_configs():
             "chain_name": "Ethereum",
             "native_token": "ETH",
             "rpcfi_partner": "Ankr",
-            "governance_token": "NEURA",
+            "governance_token": "ANKR",
             "base_currency": "USD",
             "token_prices": {
                 "ETH": 2500.0,
                 "ANKR": 0.025,
-                "NEURA": 0.80
+                "ANKR": 0.025
             },
             "initial_lp": {
                 "Ethereum Foundation": 50000,
@@ -168,12 +168,12 @@ def create_sample_configs():
             "chain_name": "Polygon",
             "native_token": "MATIC",
             "rpcfi_partner": "Ankr",
-            "governance_token": "NEURA",
+            "governance_token": "ANKR",
             "base_currency": "USD",
             "token_prices": {
                 "MATIC": 0.85,
                 "ANKR": 0.025,
-                "NEURA": 0.80
+                "ANKR": 0.025
             },
             "initial_lp": {
                 "Polygon Foundation": 50000,
@@ -230,13 +230,13 @@ def main():
     else:
         # Generate single scenario
         if args.scenario == "conservative":
-            revenue_data = generate_synthetic_revenue_data(base_revenue=12000, growth_rate=0.10, volatility=0.05)
+            revenue_data = generate_synthetic_revenue_data(base_revenue=12000, growth_rate=0.0, volatility=0.02)
         elif args.scenario == "moderate":
-            revenue_data = generate_synthetic_revenue_data(base_revenue=15000, growth_rate=0.15, volatility=0.10)
+            revenue_data = generate_synthetic_revenue_data(base_revenue=15000, growth_rate=0.0, volatility=0.05)
         elif args.scenario == "aggressive":
-            revenue_data = generate_synthetic_revenue_data(base_revenue=20000, growth_rate=0.20, volatility=0.15)
+            revenue_data = generate_synthetic_revenue_data(base_revenue=20000, growth_rate=0.0, volatility=0.08)
         elif args.scenario == "volatile":
-            revenue_data = generate_synthetic_revenue_data(base_revenue=15000, growth_rate=0.12, volatility=0.25)
+            revenue_data = generate_synthetic_revenue_data(base_revenue=15000, growth_rate=0.0, volatility=0.15)
         
         print(f"Generated {args.scenario} scenario:")
         print(f"Total 6-month revenue: ${sum(revenue_data.values()):,.0f}")

@@ -1,0 +1,34 @@
+{
+  "chain_name": "Tron",
+  "native_token": "TRX",
+  "governance_token": "ANKR",
+  "base_currency": "USD",
+  "token_prices": {
+    "TRX": 0.29,
+    "ANKR": 0.012
+  },
+  "initial_lp": {
+    "Tron Foundation": 50000,
+    "Ankr Foundation": 50000
+  },
+  "growth_multiplier": 1.0,
+  "expected_future_growth_multiplier": 1.8,
+  "start_date": "2025-01-15",
+  "simulation_period": {
+    "start": "2026-01-01",
+    "end": "2027-12-31"
+  },
+  "apy_scenarios": {
+    "worst": 20.0,
+    "base": 30.0,
+    "best": 40.0
+  },
+  "historical_data": {
+    "2025-04": 5598.0,
+    "2025-05": 4314.31,
+    "2025-06": 5307.05,
+    "2025-07": 5780.68,
+    "2025-08": 5784.98,
+    "2025-09": 4829.4
+  }
+}
